@@ -1,0 +1,82 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load persian_tags %}
+
+{% block title %}مدیریت کلاس‌ها | پنل مدیریت{% endblock %}
+
+{% block panel_content %}
+<div class="flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-extrabold text-stone-900">مدیریت کلاس‌ها</h1>
+        <p class="mt-1 text-sm text-stone-500">{{ classes|length }} کلاس ثبت‌شده</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="mt-6 flex flex-wrap items-center gap-3">
+    <select name="term" class="rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-brand-500">
+        <option value="">همه ترم‌ها</option>
+        {% for t in terms %}
+        <option value="{{ t }}" {% if filters.term == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+    <select name="status" class="rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-brand-500">
+        <option value="">همه وضعیت‌ها</option>
+        <option value="ACTIVE" {% if filters.status == 'ACTIVE' %}selected{% endif %}>فعال</option>
+        <option value="ENDED" {% if filters.status == 'ENDED' %}selected{% endif %}>پایان‌یافته</option>
+        <option value="CANCELED" {% if filters.status == 'CANCELED' %}selected{% endif %}>لغو‌شده</option>
+    </select>
+    <button type="submit" class="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90">اعمال فیلتر</button>
+    <a href="{% url 'admin_panel:classes' %}" class="rounded-lg border border-stone-300 px-4 py-2 text-sm hover:bg-stone-100">پاک کردن</a>
+</form>
+
+<!-- Classes table -->
+<div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-stone-50 text-right text-xs text-stone-500">
+                <tr>
+                    <th class="px-4 py-3 font-medium">دوره</th>
+                    <th class="px-4 py-3 font-medium">مدرس</th>
+                    <th class="px-4 py-3 font-medium">ترم</th>
+                    <th class="px-4 py-3 font-medium text-center">ظرفیت</th>
+                    <th class="px-4 py-3 font-medium text-center">وضعیت</th>
+                    <th class="px-4 py-3 font-medium text-center">عملیات</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-stone-100">
+                {% for cls in classes %}
+                <tr class="transition hover:bg-stone-50">
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-stone-900">{{ cls.course.title }}</div>
+                        <div class="text-xs text-stone-500">{{ cls.course.get_instrument_display }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-stone-700">{{ cls.teacher.user.full_name|default:"—" }}</td>
+                    <td class="px-4 py-3 text-stone-500">{{ cls.term }}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="font-medium text-stone-900">{{ cls.active_enrollments|fa_intcomma }}</span>
+                        <span class="text-stone-400">/{{ cls.capacity|fa_intcomma }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="rounded-full px-2 py-0.5 text-xs
+                            {% if cls.status == 'ACTIVE' %}bg-green-100 text-green-700
+                            {% elif cls.status == 'ENDED' %}bg-stone-100 text-stone-600
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            {{ cls.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <a href="{% url 'admin_panel:class_detail' cls.pk %}" class="inline-block rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium hover:bg-stone-100">
+                            مشاهده دانشجویان
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-12 text-center text-stone-500">کلاسی ثبت نشده است.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

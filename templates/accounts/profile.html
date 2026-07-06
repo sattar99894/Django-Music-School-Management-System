@@ -1,0 +1,111 @@
+{% extends "accounts/student_base.html" %}
+{% load persian_tags %}
+
+{% block title %}پروفایل | هنرستان موسیقی شیراز{% endblock %}
+
+{% block panel_content %}
+<div>
+    <h1 class="text-2xl font-extrabold text-stone-900">پروفایل من</h1>
+    <p class="mt-1 text-sm text-stone-500">اطلاعات خود را ویرایش کنید.</p>
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+    <!-- Avatar preview -->
+    <div class="lg:sticky lg:top-20 lg:self-start">
+        <div class="rounded-2xl border border-stone-200 bg-white p-6 text-center">
+            {% if user.avatar %}
+            <img id="avatar-preview" src="{{ user.avatar.url }}" alt="" class="mx-auto h-28 w-28 rounded-full object-cover">
+            {% else %}
+            <div id="avatar-placeholder" class="mx-auto flex h-28 w-28 items-center justify-center rounded-full brand-gradient text-4xl font-bold text-white">
+                {{ user.full_name|slice:":1"|default:"؟" }}
+            </div>
+            <img id="avatar-preview" alt="" class="mx-auto hidden h-28 w-28 rounded-full object-cover">
+            {% endif %}
+            <div class="mt-4 font-semibold text-stone-900">{{ user.full_name|default:"بدون نام" }}</div>
+            <div class="text-xs text-stone-500" dir="ltr">{{ user.phone }}</div>
+            {% if user.instrument %}<div class="mt-2 inline-block rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-600">{{ user.get_instrument_display|default:user.instrument }}</div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Edit form -->
+    <div>
+        <form method="post" action="{% url 'auth:profile' %}" enctype="multipart/form-data" class="rounded-2xl border border-stone-200 bg-white p-6">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label for="id_full_name" class="mb-1.5 block text-sm font-medium text-stone-700">نام و نام خانوادگی</label>
+                    <input type="text" id="id_full_name" name="full_name" required value="{{ form.full_name.value|default:'' }}"
+                           class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                    {% if form.full_name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.full_name.errors|join:" / " }}</p>{% endif %}
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="id_phone" class="mb-1.5 block text-sm font-medium text-stone-700">شماره موبایل</label>
+                        <input type="tel" id="id_phone" name="phone" required inputmode="numeric" maxlength="11" value="{{ form.phone.value|default:'' }}" dir="ltr"
+                               class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                        {% if form.phone.errors %}<p class="mt-1 text-xs text-red-600">{{ form.phone.errors|join:" / " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="id_national_id" class="mb-1.5 block text-sm font-medium text-stone-700">کد ملی</label>
+                        <input type="text" id="id_national_id" name="national_id" inputmode="numeric" maxlength="10" value="{{ form.national_id.value|default:'' }}" dir="ltr"
+                               class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                        {% if form.national_id.errors %}<p class="mt-1 text-xs text-red-600">{{ form.national_id.errors|join:" / " }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="id_instrument" class="mb-1.5 block text-sm font-medium text-stone-700">ساز</label>
+                        <select id="id_instrument" name="instrument" class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                            {% for value, label in form.instrument.field.choices %}
+                            <option value="{{ value }}" {% if form.instrument.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                            <option value="" {% if not form.instrument.value %}selected{% endif %}>— انتخاب نشده —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="id_skill_level" class="mb-1.5 block text-sm font-medium text-stone-700">سطح هنری</label>
+                        <select id="id_skill_level" name="skill_level" class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                            <option value="" {% if not form.skill_level.value %}selected{% endif %}>— انتخاب نشده —</option>
+                            {% for value, label in form.skill_level.field.choices %}
+                            <option value="{{ value }}" {% if form.skill_level.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="id_avatar" class="mb-1.5 block text-sm font-medium text-stone-700">تصویر پروفایل</label>
+                    <input type="file" id="id_avatar" name="avatar" accept="image/*"
+                           class="block w-full text-sm text-stone-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-600 hover:file:bg-brand-100">
+                    <p class="mt-1 text-xs text-stone-400">حداکثر سایز: ۲ مگابایت — فرمت‌های مجاز: JPG, PNG</p>
+                    {% if form.avatar.errors %}<p class="mt-1 text-xs text-red-600">{{ form.avatar.errors|join:" / " }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center gap-3 border-t border-stone-200 pt-5">
+                <button type="submit" class="rounded-xl brand-gradient px-6 py-2.5 font-semibold text-white transition hover:opacity-90">ذخیره تغییرات</button>
+                <a href="{% url 'auth:dashboard' %}" class="rounded-xl border border-stone-300 px-6 py-2.5 text-sm font-medium hover:bg-stone-100">انصراف</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Live avatar preview -->
+<script>
+    const input = document.getElementById('id_avatar');
+    const preview = document.getElementById('avatar-preview');
+    const placeholder = document.getElementById('avatar-placeholder');
+    if (input) {
+        input.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file && preview) {
+                preview.src = URL.createObjectURL(file);
+                preview.classList.remove('hidden');
+                if (placeholder) placeholder.classList.add('hidden');
+            }
+        });
+    }
+</script>
+{% endblock %}

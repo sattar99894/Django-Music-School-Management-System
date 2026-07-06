@@ -1,0 +1,146 @@
+{% extends "accounts/student_base.html" %}
+{% load persian_tags humanize %}
+
+{% block title %}داشبورد دانشجو | هنرستان موسیقی شیراز{% endblock %}
+
+{% block panel_content %}
+<!-- Header -->
+<div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+        <h1 class="text-2xl font-extrabold text-stone-900">داشبورد دانشجو</h1>
+        <p class="mt-1 text-sm text-stone-500">امروز: <span class="font-medium text-stone-700">{% jnow %}</span> — {{ today_day }}</p>
+    </div>
+</div>
+
+<!-- Stat cards -->
+<div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="rounded-2xl border border-stone-200 bg-white p-4">
+        <div class="text-xs text-stone-500">دوره‌های فعال</div>
+        <div class="mt-1 text-2xl font-extrabold brand-text-gradient">{{ stats.active_courses|fa_intcomma }}</div>
+    </div>
+    <div class="rounded-2xl border border-stone-200 bg-white p-4">
+        <div class="text-xs text-stone-500">کلاس‌های امروز</div>
+        <div class="mt-1 text-2xl font-extrabold brand-text-gradient">{{ stats.today_classes|fa_intcomma }}</div>
+    </div>
+    <div class="rounded-2xl border border-stone-200 bg-white p-4">
+        <div class="text-xs text-stone-500">تیکت‌های باز</div>
+        <div class="mt-1 text-2xl font-extrabold brand-text-gradient">{{ stats.open_tickets|fa_intcomma }}</div>
+    </div>
+    <div class="rounded-2xl border border-stone-200 bg-white p-4">
+        <div class="text-xs text-stone-500">پرداخت‌های موفق</div>
+        <div class="mt-1 text-2xl font-extrabold brand-text-gradient">{{ stats.success_payments|fa_intcomma }}</div>
+    </div>
+</div>
+
+<!-- Today's classes -->
+<section class="mt-8">
+    <h2 class="mb-4 flex items-center gap-2 text-lg font-bold text-stone-900">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        کلاس‌های امروز ({{ today_day }})
+    </h2>
+    {% if today_classes %}
+    <div class="grid gap-3 sm:grid-cols-2">
+        {% for c in today_classes %}
+        <div class="flex items-center justify-between rounded-xl border border-stone-200 bg-white p-4">
+            <div>
+                <div class="font-semibold text-stone-900">{{ c.course_title }}</div>
+                <div class="text-xs text-stone-500">مدرس: {{ c.teacher_name|default:"—" }}</div>
+            </div>
+            <span class="rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-600" dir="ltr">{{ c.time }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-sm text-stone-500">
+        امروز کلاسی ندارید. روز خوبی داشته باشید! 🎵
+    </div>
+    {% endif %}
+</section>
+
+<!-- Weekly schedule -->
+<section class="mt-8">
+    <h2 class="mb-4 flex items-center gap-2 text-lg font-bold text-stone-900">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        برنامه هفتگی کلاس‌ها
+    </h2>
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+        {% for day, items in weekly.items %}
+        <div class="rounded-xl border p-3 {% if day == today_day %}border-brand-500 bg-brand-50/40 ring-1 ring-brand-500{% else %}border-stone-200 bg-white{% endif %}">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-stone-800">{{ day }}</span>
+                {% if day == today_day %}<span class="rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white">امروز</span>{% endif %}
+            </div>
+            <div class="mt-2 space-y-2">
+                {% for item in items %}
+                <div class="rounded-lg bg-stone-100 p-2 text-xs">
+                    <div class="line-clamp-1 font-medium text-stone-800">{{ item.course_title }}</div>
+                    <div class="text-stone-500" dir="ltr">{{ item.time }}</div>
+                </div>
+                {% empty %}
+                <div class="py-2 text-center text-xs text-stone-300">—</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Upcoming + Recent payments -->
+<div class="mt-8 grid gap-6 lg:grid-cols-2">
+    <section>
+        <h2 class="mb-4 text-lg font-bold text-stone-900">کلاس‌های پیش رو</h2>
+        {% if upcoming %}
+        <div class="space-y-2">
+            {% for c in upcoming %}
+            <div class="flex items-center justify-between rounded-xl border border-stone-200 bg-white p-3 text-sm">
+                <div>
+                    <div class="font-medium text-stone-900">{{ c.course_title }}</div>
+                    <div class="text-xs text-stone-500">{{ c.day }}</div>
+                </div>
+                <span class="text-stone-600" dir="ltr">{{ c.time }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-sm text-stone-500">کلاس فعالی ثبت نشده است.</p>
+        {% endif %}
+    </section>
+
+    <section>
+        <h2 class="mb-4 text-lg font-bold text-stone-900">پرداخت‌های اخیر</h2>
+        {% if recent_payments %}
+        <div class="overflow-hidden rounded-xl border border-stone-200 bg-white">
+            <table class="w-full text-sm">
+                <thead class="bg-stone-50 text-right text-xs text-stone-500">
+                    <tr>
+                        <th class="px-3 py-2 font-medium">شناسه</th>
+                        <th class="px-3 py-2 font-medium">مبلغ</th>
+                        <th class="px-3 py-2 font-medium">وضعیت</th>
+                        <th class="px-3 py-2 font-medium">تاریخ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    {% for p in recent_payments %}
+                    <tr>
+                        <td class="px-3 py-2">#{{ p.id }}</td>
+                        <td class="px-3 py-2 font-medium">{{ p.amount|fa_intcomma }}</td>
+                        <td class="px-3 py-2">
+                            <span class="rounded-full px-2 py-0.5 text-xs
+                                {% if p.status == 'SUCCESS' %}bg-green-100 text-green-700
+                                {% elif p.status == 'PENDING' %}bg-amber-100 text-amber-700
+                                {% else %}bg-red-100 text-red-700{% endif %}">
+                                {{ p.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 text-stone-500">{{ p.created_at|jdate }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-sm text-stone-500">پرداختی ثبت نشده است.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}هنرستان موسیقی شیراز{% endblock %}</title>
+    <meta name="description" content="آکادمی موسیقی شیراز؛ آموزش تخصصی پیانو، گیتار، ویولن، تار، سه‌تار و دیگر سازها با کادر مدرسین مجرب.">
+
+    <!-- Vazirmatn Persian font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS via CDN (swap for a compiled build in production) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Vazirmatn', 'system-ui', 'sans-serif'] },
+            colors: {
+              brand: {
+                50: '#fdf6ec', 100: '#f9e7c9', 200: '#f0cd97',
+                500: '#c2410c', 600: '#9a3412', 700: '#7c2d12',
+              },
+            },
+          },
+        },
+      }
+    </script>
+
+    <style>
+      body { font-family: 'Vazirmatn', system-ui, sans-serif; }
+      .brand-gradient { background-image: linear-gradient(135deg, #7c2d12 0%, #b45309 45%, #d97706 100%); }
+      .brand-text-gradient {
+        background-image: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+      .scroll-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+      .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col bg-stone-50 text-stone-800 antialiased">
+
+    <!-- ===================== Header ===================== -->
+    <header class="sticky top-0 z-50 w-full border-b border-stone-200/70 bg-white/80 backdrop-blur">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+            <a href="{% url 'core:landing' %}" class="flex items-center gap-2">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg brand-gradient text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18V5l12-2v13M9 9l12-2M9 18a3 3 0 11-6 0 3 3 0 016 0zm12-3a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </span>
+                <span class="text-lg font-extrabold tracking-tight">هنرستان موسیقی شیراز</span>
+            </a>
+
+            <nav class="hidden items-center gap-1 md:flex">
+                <a href="{% url 'core:landing' %}" class="rounded-md px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">خانه</a>
+                <a href="{% url 'core:course_list' %}" class="rounded-md px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">دوره‌ها</a>
+                <a href="{% url 'core:landing' %}#about" class="rounded-md px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">درباره ما</a>
+                <a href="{% url 'core:landing' %}#contact" class="rounded-md px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900">تماس</a>
+            </nav>
+
+            <div class="hidden items-center gap-2 md:flex">
+                {% if user.is_authenticated %}
+                    {% if user.role == 'ADMIN' %}
+                    <a href="{% url 'admin_panel:dashboard' %}" class="rounded-lg brand-gradient px-4 py-2 text-sm font-semibold text-white hover:opacity-90">پنل مدیریت</a>
+                    {% else %}
+                    <a href="{% url 'auth:dashboard' %}" class="rounded-lg brand-gradient px-4 py-2 text-sm font-semibold text-white hover:opacity-90">پنل دانشجو</a>
+                    {% endif %}
+                    <span class="text-sm text-stone-600">{{ user.full_name|default:user.phone }}</span>
+                    <a href="{% url 'auth:logout' %}" class="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-100">خروج</a>
+                {% else %}
+                    <a href="{% url 'auth:login' %}" class="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-100">ورود دانشجو</a>
+                    <a href="{% url 'auth:register' %}" class="rounded-lg brand-gradient px-4 py-2 text-sm font-semibold text-white hover:opacity-90">ثبت‌نام دانشجو</a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile: simple menu button -->
+            <a href="{% url 'core:course_list' %}" class="md:hidden rounded-lg border border-stone-300 px-3 py-2 text-sm">دوره‌ها</a>
+        </div>
+    </header>
+
+    <!-- ===================== Main ===================== -->
+    <main class="flex-1">
+        {% if messages %}
+        <div class="mx-auto max-w-6xl px-4 pt-4 space-y-2">
+            {% for message in messages %}
+            <div class="rounded-lg border px-4 py-3 text-sm
+                {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700
+                {% elif message.tags == 'success' %}border-green-200 bg-green-50 text-green-700
+                {% else %}border-stone-200 bg-stone-50 text-stone-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===================== Footer (sticky to bottom) ===================== -->
+    <footer id="contact" class="mt-auto border-t border-stone-200 bg-stone-100">
+        <div class="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-4">
+            <div class="md:col-span-2">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-lg brand-gradient text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18V5l12-2v13M9 9l12-2M9 18a3 3 0 11-6 0 3 3 0 016 0zm12-3a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </span>
+                    <span class="text-lg font-bold">هنرستان موسیقی شیراز</span>
+                </div>
+                <p class="mt-3 max-w-md text-sm leading-7 text-stone-600">
+                    آکادمی تخصصی آموزش موسیقی در شیراز با کادری مجرب از مدرسین برتر.
+                    آموزش نوازندگی سازهای ایرانی و غربی از مقدماتی تا پیشرفته.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="mb-3 text-sm font-semibold">دسترسی سریع</h4>
+                <ul class="space-y-2 text-sm text-stone-600">
+                    <li><a href="{% url 'core:landing' %}" class="hover:text-stone-900">خانه</a></li>
+                    <li><a href="{% url 'core:course_list' %}" class="hover:text-stone-900">دوره‌ها</a></li>
+                    <li><a href="{% url 'auth:login' %}" class="hover:text-stone-900">ورود دانشجو</a></li>
+                    <li><a href="{% url 'auth:admin_login' %}" class="hover:text-stone-900">ورود مدیران</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="mb-3 text-sm font-semibold">تماس با ما</h4>
+                <ul class="space-y-2 text-sm text-stone-600">
+                    <li class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>
+                        شیراز، خیابان زند، نبش کوچه هنر
+                    </li>
+                    <li class="flex items-center gap-2" dir="ltr">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h2.28a2 2 0 011.94 1.515l.7 2.8a2 2 0 01-.45 1.95L8.09 11.41a16 16 0 006.5 6.5l1.145-1.38a2 2 0 011.95-.45l2.8.7A2 2 0 0122 18.72V21a2 2 0 01-2 2A18 18 0 013 5z"/></svg>
+                        071-32200000
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="border-t border-stone-200 py-4 text-center text-xs text-stone-500">
+            © ۱۴۰۳ هنرستان موسیقی شیراز — تمامی حقوق محفوظ است.
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

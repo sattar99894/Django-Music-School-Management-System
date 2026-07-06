@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}ورود مدیران | هنرستان موسیقی شیراز{% endblock %}
+
+{% block content %}
+<div class="mx-auto flex max-w-md flex-col px-4 py-16">
+    <div class="rounded-2xl border border-stone-800 bg-stone-900 p-8 shadow-xl">
+        <div class="mb-6 text-center">
+            <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </span>
+            <h1 class="mt-4 text-2xl font-extrabold text-white">ورود مدیران</h1>
+            <p class="mt-1 text-sm text-stone-400">این صفحه مختصر حساب‌های مدیریت است.</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{% url 'auth:admin_login' %}" class="space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label for="phone" class="mb-1.5 block text-sm font-medium text-stone-300">شماره موبایل</label>
+                <input type="tel" id="phone" name="phone" required inputmode="numeric" maxlength="11"
+                       placeholder="09120000000" dir="ltr"
+                       class="w-full rounded-lg border border-stone-700 bg-stone-800 px-4 py-2.5 text-sm text-white outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30">
+            </div>
+
+            <div>
+                <label for="password" class="mb-1.5 block text-sm font-medium text-stone-300">رمز عبور</label>
+                <input type="password" id="password" name="password" required dir="ltr"
+                       class="w-full rounded-lg border border-stone-700 bg-stone-800 px-4 py-2.5 text-sm text-white outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30">
+            </div>
+
+            <button type="submit" class="w-full rounded-xl bg-white py-3 font-bold text-stone-900 shadow-lg transition hover:bg-stone-100">
+                ورود به پنل مدیریت
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-xs text-stone-500">
+            <a href="{% url 'auth:login' %}" class="hover:text-stone-300">← بازگشت به ورود دانشجو</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
