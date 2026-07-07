@@ -1,4 +1,4 @@
-# هنرستان موسیقی شیراز — Django Music School Management System
+#  موسیقی شیراز — Django Music School Management System
 
 A modular, production-ready Django (MVT) music school management system for an
 academy in Shiraz, Iran. Fully Persian / RTL, with Zarinpal payment integration.
