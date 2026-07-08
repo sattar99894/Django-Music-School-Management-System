@@ -46,7 +46,7 @@ poetry run python manage.py runserver
 
 ## 🌳 ساختار درختی پروژه
 
-text
+```text
 django_music_school/
 ├── manage.py
 ├── pyproject.toml
@@ -92,7 +92,7 @@ django_music_school/
 │
 └── media/                          # فایل‌های آپلودی (آواتارها)
 └── avatars/
-
+````
 ---
 
 ## ✨ ویژگی‌های اصلی
