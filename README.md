@@ -1,126 +1,204 @@
-#  موسیقی شیراز — Django Music School Management System
+# 🎵 موسیقی شیراز — سیستم مدیریت آموزشگاه موسیقی با Django
 
-A modular, production-ready Django (MVT) music school management system for an
-academy in Shiraz, Iran. Fully Persian / RTL, with Zarinpal payment integration.
+یک سیستم مدیریت آموزشگاه موسیقی کامل، ماژولار و آماده‌ی تولید با Django 5 و Poetry.
+این پروژه برای یک آموزشگاه موسیقی در شیراز طراحی شده و از درگاه زرین‌پال، احراز هویت مبتنی بر شماره تلفن، داشبورد دانشجو و ادمین، سیستم تیکتینگ و پنل مدیریتی اختصاصی پشتیبانی می‌کند.
 
-> **Stack:** Django 5 · Django Templates + Tailwind (CDN) + Vanilla JS ·
-> SQLite (swap for Postgres in prod) · Zarinpal Request/Verify API ·
-> Persian (fa) / RTL / Asia/Tehran.
+✅ **کاملاً راست‌چین (RTL)** · **پشتیبانی از تاریخ شمسی** · **اعداد فارسی** · **قالب‌های Tailwind CSS**
 
 ---
 
-## ⚠️ About this environment
-
-This code is delivered as **pure Django source code**. The sandbox it was
-generated in only runs a Next.js dev server, so the Django project **cannot be
-executed or previewed inside that sandbox**. Run it on your own machine /
-server with the commands below.
+## 📦 پیش‌نیازها
+* **Python 3.10** یا بالاتر
+* **Poetry** برای مدیریت وابستگی‌ها
+* *(اختیاری)* PostgreSQL برای محیط تولید
 
 ---
 
-## Project structure
+## 🚀 نصب و راه‌اندازی سریع
+```bash
+# ۱. دریافت کد پروژه
+git clone https://github.com/your-username/django-music-school.git
+cd django-music-school
 
+# ۲. نصب وابستگی‌ها با Poetry
+poetry install
+
+# ۳. کپی فایل محیط و تنظیم متغیرها
+cp .env.example .env
+# سپس .env را ویرایش کرده و SECRET_KEY، ZARINPAL_MERCHANT_ID و ... را تنظیم کنید.
+
+# ۴. اجرای مایگریشن‌ها
+poetry run python manage.py migrate
+
+# ۵. (اختیاری) بارگذاری داده‌های نمونه
+poetry run python manage.py seed_data
+# کاربر ادمین: 09120000000 / رمز: admin12345
+
+# ۶. اجرای سرور توسعه
+poetry run python manage.py runserver
+بازدید کنید: `http://localhost:8000`
 ```
+---
+
+## 🌳 ساختار درختی پروژه
+
+text
 django_music_school/
 ├── manage.py
-├── requirements.txt
-├── .env.example              # copy to .env
-├── config/                   # project settings, urls, wsgi/asgi
+├── pyproject.toml
+├── poetry.lock
+├── .env
+├── .gitignore
+├── README.md
+│
+├── config/                         # تنظیمات اصلی پروژه
+│   ├── __init__.py
 │   ├── settings.py
-│   └── urls.py
-├── apps/
-│   ├── accounts/             # custom User (phone login, roles, profile)
-│   ├── school/               # Teacher, Course, Class, Enrollment
-│   ├── tickets/              # Ticket, TicketMessage        (Step 3)
-│   ├── payments/             # Payment model + Zarinpal helper/views
-│   └── core/                 # public website (landing, courses, invoice)
-├── templates/
-│   ├── base.html             # RTL, Vazirmatn, Tailwind CDN, sticky footer
-│   ├── core/                 # landing, course_list, course_detail, invoice
-│   └── payments/             # verify_success / verify_fail
-├── static/
-└── media/                    # uploaded avatars
-```
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+│
+├── apps/                           # تمام اپلیکیشن‌های پروژه
+│   ├── __init__.py
+│   │
+│   ├── accounts/                   # مدیریت کاربران، احراز هویت، نقش‌ها
+│   │   ├── migrations/
+│   │   ├── admin.py
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   ├── forms.py
+│   │   └── ...
+│   │
+│   ├── school/                     # مدل‌های آموزشگاه (Teacher, Course, Class, Enrollment)
+│   ├── tickets/                    # سیستم تیکتینگ
+│   ├── payments/                   # پرداخت‌ها و درگاه زرین‌پال
+│   ├── core/                       # صفحات عمومی سایت و تگ‌های قالب (persian_tags)
+│   └── admin_panel/                # پنل مدیریت اختصاصی ادمین
+│
+├── templates/                      # قالب‌های HTML
+│   ├── base.html                   # قالب پایه (RTL، Tailwind)
+│   ├── core/
+│   ├── accounts/
+│   ├── admin_panel/
+│   └── payments/
+│
+├── static/                         # فایل‌های ایستا
+│   └── js/
+│
+└── media/                          # فایل‌های آپلودی (آواتارها)
+└── avatars/
 
 ---
 
-## Setup
+## ✨ ویژگی‌های اصلی
 
-```bash
-# 1. Create & activate a virtualenv
-python -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+### 👥 احراز هویت و نقش‌ها
+* ورود / ثبت‌نام با شماره تلفن (بدون نام کاربری)
+* دو نقش دانشجو و ادمین با دکوریتورهای دسترسی مجزا
+* صفحه ورود اختصاصی برای ادمین‌ها
 
-# 2. Install dependencies
-pip install -r requirements.txt
+### 🎓 بخش آموزشگاه
+* مدل‌های استاد، دوره، کلاس و ثبت‌نام
+* نمایش لیست دوره‌ها و جزئیات هر دوره
+* امکان ثبت‌نام در دوره از طریق فاکتور و پرداخت آنلاین
 
-# 3. Configure environment
-cp .env.example .env
-#   edit .env  -> set SECRET_KEY, ZARINPAL_MERCHANT_ID, ZARINPAL_SANDBOX, SITE_URL
+### 💳 پرداخت با زرین‌پال
+* درخواست پرداخت با ایجاد Payment و دریافت Authority
+* بازگشت به سایت و تأیید خودکار پرداخت
+* ثبت‌نام خودکار دانشجو در دوره پس از تأیید پرداخت (idempotent)
+* نمایش شماره مرجع و وضعیت تراکنش
 
-# 4. Apply migrations
-python manage.py migrate
+### 🎫 سیستم تیکتینگ (پشتیبانی)
+* دانشجویان می‌توانند تیکت ایجاد کنند و پیام بفرستند
+* پاسخ ادمین و مشاهدهٔ گفتگو (با AJAX)
+* لیست تیکت‌ها با وضعیت (باز/بسته)
 
-# 5. (optional) load sample data — admin + 4 teachers + 6 courses + 6 classes
-python manage.py seed_data
-#   admin login: 09120000000 / admin12345
+### 📊 داشبوردها
+* **داشبورد دانشجو:** نمایش کلاس‌های هفته، رویدادها، تیکت‌ها و پرداخت‌های اخیر
+* **داشبورد ادمین:** آمار کلی، مدیریت کلاس‌ها، جستجو و فیلتر دانشجویان و کلاس‌ها
 
-# 6. Run the dev server
-python manage.py runserver
-```
-
-Open <http://localhost:8000>.
-
----
-
-## What's included so far
-
-| Area | Step 1 | Step 2 |
-|------|:------:|:------:|
-| Models: User, Teacher, Course, Class, Enrollment, Ticket, TicketMessage, Payment | ✅ | |
-| Landing page (hero, intro, courses, CTA) | ✅ | |
-| Courses list page | ✅ | |
-| Course detail page (instructor, price, description, schedule) | ✅ | |
-| Invoice / checkout page (name, phone, national ID → Zarinpal) | ✅ | |
-| Zarinpal `request_payment` + redirect to gateway | ✅ | |
-| Django admin for every model | ✅ | |
-| Seed command (`seed_data`) | ✅ | |
-| **Student login & register** (phone-based, role-aware) | | ✅ |
-| **Separate admin login page** | | ✅ |
-| **Role-based decorators** (`student_required`, `admin_required`) | | ✅ |
-| **Full Zarinpal verify** (verify → SUCCESS + ref_id → auto Enrollment → auto-login) | | ✅ |
-| **Idempotent re-verify** (no duplicate enrolment on refresh) | | ✅ |
-| **Authenticated invoice** (reuses logged-in user, prefills form) | | ✅ |
-| **Dynamic nav** (login/register vs name/dashboard/logout) | | ✅ |
-| **Student dashboard stub** (enrollments + recent payments) | | ✅ |
-| **Admin dashboard stub** (basic stats) | | ✅ |
-| Student dashboard — full panel (weekly classes, events) | ⏭ | ✅ Step 3 |
-| Tickets (AJAX create/list + detail/reply) | ⏭ | ✅ Step 3 |
-| Profile page (edit + avatar upload) | ⏭ | ✅ Step 3 |
-| Persian (Jalali) date filter + Persian number formatting | ⏭ | ✅ Step 3 |
-| Admin dashboard — full (classes management, directory, search/filters) | ⏭ | ✅ Step 4 |
+### 🧰 ابزارهای جانبی
+* فیلترهای قالب برای تاریخ شمسی و اعداد فارسی
+* آپلود آواتار برای کاربران
+* اسکریپت `seed_data` برای تولید داده‌های نمونه
 
 ---
 
-## Zarinpal
+## 🧪 دستورات مفید Poetry
 
-- Set `ZARINPAL_SANDBOX=True` while developing (uses Zarinpal sandbox endpoints).
-- Put your real merchant UUID in `ZARINPAL_MERCHANT_ID`.
-- `SITE_URL` must be the public URL Zarinpal can redirect back to.
-
-The flow lives in `apps/payments/zarinpal.py` and `apps/payments/views.py`:
-
-1. Invoice form POST → creates a `Payment(PENDING)` → redirects to
-   `/payments/request/<id>/`.
-2. `zarinpal_request` calls the gateway, stores `authority`, redirects the
-   browser to the Zarinpal hosted page.
-3. Zarinpal redirects back to `/payments/verify/?Status=OK&Authority=...`.
-4. `zarinpal_verify` (full DB update in Step 2) verifies & shows the result.
+| کاربرد | دستور |
+| :--- | :--- |
+| **نصب وابستگی‌ها** | `poetry install` |
+| **اضافه کردن پکیج** | `poetry add <package>` |
+| **حذف پکیج** | `poetry remove <package>` |
+| **اجرای سرور توسعه** | `poetry run python manage.py runserver` |
+| **ساخت مایگریشن** | `poetry run python manage.py makemigrations` |
+| **اعمال مایگریشن** | `poetry run python manage.py migrate` |
+| **وارد شدن به shell جنگو** | `poetry run python manage.py shell` |
+| **اجرای تست‌ها** | `poetry run python manage.py test` |
+| **اجرای اسکریپت seed** | `poetry run python manage.py seed_data` |
 
 ---
 
-## Producing a production Tailwind build (optional)
+## ⚙️ متغیرهای محیطی (فایل `.env`)
 
-Templates ship with the Tailwind CDN for zero-config styling. For production,
-replace the CDN `<script>` in `templates/base.html` with a compiled
-`static/css/tailwind.css` built via the Tailwind CLI.
+env
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+SITE_URL=http://localhost:8000
+
+ZARINPAL_MERCHANT_ID=your-merchant-id
+ZARINPAL_SANDBOX=True
+
+# دیتابیس (اختیاری)
+DB_NAME=db.sqlite3
+# برای PostgreSQL:
+# DB_ENGINE=django.db.backends.postgresql
+# DB_NAME=mydb
+# DB_USER=myuser
+# DB_PASSWORD=mypass
+# DB_HOST=localhost
+# DB_PORT=5432
+> ⚠️ در محیط تولید حتماً `DEBUG=False` و `ZARINPAL_SANDBOX=False` تنظیم شود.
+
+---
+
+## 🗂️ دیتابیس و مدل‌ها
+پروژه از SQLite به‌عنوان پیش‌فرض استفاده می‌کند (قابل تعویض با PostgreSQL). مدل‌های اصلی عبارتند از:
+* **User:** پیش‌فرض سفارشی با `phone` به‌عنوان شناسه
+* **Teacher:** استادان
+* **Course:** دوره‌های آموزشی
+* **Class:** کلاس‌های هر دوره با زمان و مکان
+* **Enrollment:** ثبت‌نام دانشجو در کلاس
+* **Ticket و TicketMessage:** تیکت‌های پشتیبانی
+* **Payment:** تراکنش‌های زرین‌پال
+
+---
+
+## 🛠️ تکنولوژی‌های استفاده‌شده
+* **Backend:** Django 5
+* **Frontend:** Tailwind CSS (CDN) + Vanilla JS
+* **Payment:** Zarinpal REST API
+* **Package Manager:** Poetry
+* **Database:** SQLite (توسعه) / PostgreSQL (تولید)
+* **Localization:** Persian (fa-IR), RTL, Asia/Tehran timezone
+
+---
+
+## 📝 نکات توسعه
+* تمام اپلیکیشن‌ها در پوشهٔ `apps/` قرار دارند و با پیشوند `apps.` در `INSTALLED_APPS` معرفی شده‌اند.
+* قالب‌ها از `base.html` ارث‌بری می‌کنند که شامل فایل‌های استایل پایه، فوتر چسبنده و اسکریپت‌های مشترک است.
+* برای فیلترهای فارسی، از `templatetags/persian_tags.py` استفاده کنید (بارگذاری با `{% load persian_tags %}`).
+* مسیرهای اپلیکیشن‌ها در `config/urls.py` مدیریت می‌شوند.
+
+---
+
+## 🚢 استقرار در تولید
+۱. متغیرهای محیطی را برای تولید تنظیم کنید (`DEBUG=False`, `ZARINPAL_SANDBOX=False`).
+۲. دیتابیس را به PostgreSQL یا هر DB تولیدی تغییر دهید.
+۳. فایل‌های استاتیک را جمع‌آوری کنید:
+bash
+poetry run python manage.py collectstatic
+۴. از یک وب‌سرور مانند Gunicorn یا uWSGI استفاده کنید.
+۵. برای Tailwind، اسکریپت CDN را با یک فایل کامپایل‌شده جایگزین کنید (با استفاده از Tailwind CLI).
