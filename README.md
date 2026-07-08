@@ -37,7 +37,11 @@ poetry run python manage.py seed_data
 # ۶. اجرای سرور توسعه
 poetry run python manage.py runserver
 بازدید کنید: `http://localhost:8000`
+<<<<<<< HEAD
 ```
+=======
+
+>>>>>>> cdf52180da9e876df97eff10d7222755b63e5a8f
 ---
 
 ## 🌳 ساختار درختی پروژه
