@@ -33,8 +33,10 @@ class Instrument(models.TextChoices):
 
 class SkillLevel(models.TextChoices):
     BEGINNER = "BEGINNER", _("مقدماتی")
+    ELEMENTARY = "ELEMENTARY", _("ابتدایی")
     INTERMEDIATE = "INTERMEDIATE", _("متوسط")
     ADVANCED = "ADVANCED", _("پیشرفته")
+    PROFESSIONAL = "PROFESSIONAL", _("حرفه‌ای")
 
 
 # ------------------------------------------------------------------
@@ -71,7 +73,7 @@ class Course(models.Model):
     price = models.PositiveIntegerField(_("شهریه (تومان)"))
     duration_weeks = models.PositiveIntegerField(_("مدت دوره (هفته)"), default=12)
     level = models.CharField(
-        _("سطح"), max_length=12, choices=SkillLevel.choices, default=SkillLevel.BEGINNER
+        _("سطح"), max_length=15, choices=SkillLevel.choices, default=SkillLevel.BEGINNER
     )
     instrument = models.CharField(
         _("ساز"), max_length=20, choices=Instrument.choices

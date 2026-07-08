@@ -1,4 +1,4 @@
-"""Forms for the accounts app — student registration."""
+"""Forms for the accounts app — student registration & profile."""
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -7,7 +7,7 @@ from apps.school.models import Instrument
 
 
 class RegisterForm(forms.Form):
-    """Student self-registration form."""
+    """Student self-registration form (multi-instrument selection)."""
 
     full_name = forms.CharField(
         label="نام و نام خانوادگی",
@@ -28,10 +28,11 @@ class RegisterForm(forms.Form):
             attrs={"placeholder": "۱۰ رقم", "inputmode": "numeric", "dir": "ltr"}
         ),
     )
-    instrument = forms.ChoiceField(
-        label="ساز مورد علاقه",
+    instruments = forms.MultipleChoiceField(
+        label="ساز(های) مورد علاقه",
         choices=Instrument.choices,
         required=False,
+        widget=forms.CheckboxSelectMultiple,
     )
     password = forms.CharField(
         label="رمز عبور",
@@ -66,22 +67,33 @@ class RegisterForm(forms.Form):
         return cleaned
 
     def save(self) -> User:
-        return User.objects.create_user(
+        from apps.accounts.models import InstrumentProfile, SkillLevel
+
+        user = User.objects.create_user(
             phone=self.cleaned_data["phone"],
             full_name=self.cleaned_data["full_name"],
             password=self.cleaned_data["password"],
             national_id=self.cleaned_data["national_id"],
-            instrument=self.cleaned_data.get("instrument", ""),
             role=User.Role.STUDENT,
         )
+        # Create an InstrumentProfile per selected instrument (first = primary).
+        for i, inst in enumerate(self.cleaned_data.get("instruments", [])):
+            InstrumentProfile.objects.create(
+                user=user,
+                instrument=inst,
+                skill_level=SkillLevel.BEGINNER,
+                is_primary=(i == 0),
+            )
+        return user
 
 
 class ProfileForm(forms.ModelForm):
-    """Editable student profile (name, phone, national ID, instrument, avatar)."""
+    """Editable basic profile (name, phone, national ID, avatar).
+    Instruments and experiences are managed separately via AJAX."""
 
     class Meta:
         model = User
-        fields = ["full_name", "phone", "national_id", "instrument", "skill_level", "avatar"]
+        fields = ["full_name", "phone", "national_id", "avatar"]
         widgets = {
             "full_name": forms.TextInput(attrs={"placeholder": "نام و نام خانوادگی"}),
             "phone": forms.TextInput(

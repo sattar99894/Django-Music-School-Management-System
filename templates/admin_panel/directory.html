@@ -24,8 +24,10 @@
     <select id="f-skill" name="skill_level" class="rounded-lg border border-stone-300 px-3 py-2.5 text-sm outline-none focus:border-brand-500">
         <option value="">همه سطوح</option>
         <option value="BEGINNER" {% if filters.skill_level == 'BEGINNER' %}selected{% endif %}>مقدماتی</option>
+        <option value="ELEMENTARY" {% if filters.skill_level == 'ELEMENTARY' %}selected{% endif %}>ابتدایی</option>
         <option value="INTERMEDIATE" {% if filters.skill_level == 'INTERMEDIATE' %}selected{% endif %}>متوسط</option>
         <option value="ADVANCED" {% if filters.skill_level == 'ADVANCED' %}selected{% endif %}>پیشرفته</option>
+        <option value="PROFESSIONAL" {% if filters.skill_level == 'PROFESSIONAL' %}selected{% endif %}>حرفه‌ای</option>
     </select>
     <select id="f-instrument" name="instrument" class="rounded-lg border border-stone-300 px-3 py-2.5 text-sm outline-none focus:border-brand-500">
         <option value="">همه سازها</option>
@@ -69,8 +71,7 @@
                     <th class="px-4 py-3 font-medium">موبایل</th>
                     <th class="px-4 py-3 font-medium">کد ملی</th>
                     {% if role == 'STUDENT' %}
-                    <th class="px-4 py-3 font-medium">ساز</th>
-                    <th class="px-4 py-3 font-medium">سطح</th>
+                    <th class="px-4 py-3 font-medium">سازها</th>
                     {% else %}
                     <th class="px-4 py-3 font-medium">تخصص</th>
                     {% endif %}

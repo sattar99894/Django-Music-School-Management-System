@@ -20,4 +20,10 @@ urlpatterns = [
     path("tickets/<int:pk>/", views.ticket_detail, name="ticket_detail"),
     path("tickets/<int:pk>/reply/", views.ticket_reply, name="ticket_reply"),
     path("profile/", views.profile, name="profile"),
+
+    # Profile AJAX — instruments & experiences
+    path("profile/instruments/add/", views.profile_add_instrument, name="profile_add_instrument"),
+    path("profile/instruments/<int:pk>/remove/", views.profile_remove_instrument, name="profile_remove_instrument"),
+    path("profile/experiences/add/", views.profile_add_experience, name="profile_add_experience"),
+    path("profile/experiences/<int:pk>/remove/", views.profile_remove_experience, name="profile_remove_experience"),
 ]

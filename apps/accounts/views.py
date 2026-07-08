@@ -102,7 +102,7 @@ def admin_login_view(request):
 def dashboard(request):
     """Dashboard home: weekly class schedule + today's classes + stats."""
     if request.user.role == User.Role.ADMIN:
-        return redirect("auth:admin_dashboard")
+        return redirect("admin_panel:dashboard")
 
     enrollments = (
         request.user.enrollments.select_related(
@@ -256,9 +256,10 @@ def ticket_reply(request, pk):
 # ==================================================================
 # Profile
 # ==================================================================
+@ensure_csrf_cookie
 @login_required(login_url="auth:login")
 def profile(request):
-    """Edit profile fields + upload avatar."""
+    """Edit basic profile + manage instruments (multi) + experiences."""
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -268,7 +269,187 @@ def profile(request):
     else:
         form = ProfileForm(instance=request.user)
 
-    return render(request, "accounts/profile.html", {"form": form})
+    from apps.accounts.models import Experience, InstrumentProfile, SkillLevel
+    from apps.school.models import Instrument
+
+    instrument_profiles = request.user.instrument_profiles.all()
+    experiences = request.user.experiences.all()
+
+    return render(
+        request,
+        "accounts/profile.html",
+        {
+            "form": form,
+            "instrument_profiles": instrument_profiles,
+            "experiences": experiences,
+            "instrument_choices": Instrument.choices,
+            "skill_level_choices": SkillLevel.choices,
+            "experience_type_choices": Experience.Type.choices,
+        },
+    )
+
+
+# ==================================================================
+# Profile AJAX — add/remove instrument
+# ==================================================================
+@require_POST
+@login_required(login_url="auth:login")
+def profile_add_instrument(request):
+    from apps.accounts.models import InstrumentProfile, SkillLevel
+    from apps.school.models import Instrument
+
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "بدنه درخواست نامعتبر است."}, status=400)
+
+    instrument = data.get("instrument", "").strip()
+    skill_level = data.get("skill_level", SkillLevel.BEGINNER)
+    started_year = data.get("started_year")
+    is_primary = bool(data.get("is_primary", False))
+
+    errors = {}
+    if instrument not in dict(Instrument.choices):
+        errors["instrument"] = "ساز نامعتبر است."
+    if skill_level not in dict(SkillLevel.choices):
+        errors["skill_level"] = "سطح نامعتبر است."
+    if started_year:
+        try:
+            started_year = int(started_year)
+            # Accept both Jalali (1300-1500) and Gregorian (1900-2100) years
+            if not (1300 <= started_year <= 1500 or 1900 <= started_year <= 2100):
+                errors["started_year"] = "سال نامعتبر است."
+        except (TypeError, ValueError):
+            errors["started_year"] = "سال باید عدد باشد."
+
+    if errors:
+        return JsonResponse({"ok": False, "errors": errors}, status=400)
+
+    if InstrumentProfile.objects.filter(user=request.user, instrument=instrument).exists():
+        return JsonResponse(
+            {"ok": False, "error": "این ساز قبلاً برای شما ثبت شده است."}, status=400
+        )
+
+    # If marking as primary, unmark others.
+    if is_primary:
+        InstrumentProfile.objects.filter(user=request.user, is_primary=True).update(is_primary=False)
+
+    # First instrument is automatically primary if none exists yet.
+    if not request.user.instrument_profiles.exists():
+        is_primary = True
+
+    profile = InstrumentProfile.objects.create(
+        user=request.user,
+        instrument=instrument,
+        skill_level=skill_level,
+        started_year=started_year or None,
+        is_primary=is_primary,
+    )
+    return JsonResponse({
+        "ok": True,
+        "instrument_profile": {
+            "id": profile.id,
+            "instrument": profile.instrument,
+            "instrument_label": profile.get_instrument_display(),
+            "skill_level": profile.skill_level,
+            "skill_level_label": profile.get_skill_level_display(),
+            "started_year": profile.started_year,
+            "is_primary": profile.is_primary,
+        },
+    })
+
+
+@require_POST
+@login_required(login_url="auth:login")
+def profile_remove_instrument(request, pk):
+    from apps.accounts.models import InstrumentProfile
+
+    profile = get_object_or_404(InstrumentProfile, pk=pk, user=request.user)
+    was_primary = profile.is_primary
+    profile.delete()
+    # Promote another to primary if needed.
+    if was_primary:
+        first = request.user.instrument_profiles.first()
+        if first:
+            first.is_primary = True
+            first.save(update_fields=["is_primary"])
+    return JsonResponse({"ok": True})
+
+
+# ==================================================================
+# Profile AJAX — add/remove experience
+# ==================================================================
+@require_POST
+@login_required(login_url="auth:login")
+def profile_add_experience(request):
+    from apps.accounts.models import Experience
+
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "بدنه درخواست نامعتبر است."}, status=400)
+
+    title = (data.get("title") or "").strip()
+    experience_type = data.get("experience_type", Experience.Type.OTHER)
+    description = (data.get("description") or "").strip()
+    event_date = data.get("event_date") or None
+    location = (data.get("location") or "").strip()
+
+    errors = {}
+    if len(title) < 3:
+        errors["title"] = "عنوان باید حداقل ۳ کاراکتر باشد."
+    if experience_type not in dict(Experience.Type.choices):
+        errors["experience_type"] = "نوع نامعتبر است."
+
+    if errors:
+        return JsonResponse({"ok": False, "errors": errors}, status=400)
+
+    # Parse event_date string to a date object if provided
+    from datetime import date as date_cls
+    parsed_date = None
+    if event_date:
+        try:
+            parsed_date = date_cls.fromisoformat(event_date)
+        except (TypeError, ValueError):
+            pass
+
+    exp = Experience.objects.create(
+        user=request.user,
+        title=title,
+        experience_type=experience_type,
+        description=description,
+        event_date=parsed_date,
+        location=location,
+    )
+    date_persian = ""
+    if exp.event_date:
+        try:
+            date_persian = jdatetime.date.fromgregorian(date=exp.event_date).strftime("%d %B %Y")
+        except Exception:
+            date_persian = str(exp.event_date)
+    return JsonResponse({
+        "ok": True,
+        "experience": {
+            "id": exp.id,
+            "title": exp.title,
+            "experience_type": exp.experience_type,
+            "experience_type_label": exp.get_experience_type_display(),
+            "description": exp.description,
+            "event_date": exp.event_date.isoformat() if exp.event_date else "",
+            "event_date_persian": date_persian,
+            "location": exp.location,
+        },
+    })
+
+
+@require_POST
+@login_required(login_url="auth:login")
+def profile_remove_experience(request, pk):
+    from apps.accounts.models import Experience
+
+    exp = get_object_or_404(Experience, pk=pk, user=request.user)
+    exp.delete()
+    return JsonResponse({"ok": True})
 
 
 # ==================================================================

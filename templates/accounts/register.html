@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load persian_tags %}
 
 {% block title %}ثبت‌نام دانشجو | هنرستان موسیقی شیراز{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-md px-4 py-16">
+<div class="mx-auto max-w-[1100px] px-4 py-16">
     <div class="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
         <div class="mb-6 text-center">
             <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl brand-gradient text-white">
@@ -23,51 +23,60 @@
         <form method="post" action="{% url 'auth:register' %}" class="space-y-4">
             {% csrf_token %}
 
-            <div>
-                <label for="id_full_name" class="mb-1.5 block text-sm font-medium text-stone-700">نام و نام خانوادگی</label>
-                <input type="text" id="id_full_name" name="full_name" required value="{{ form.full_name.value|default:'' }}"
-                       placeholder="مثال: علی رضایی"
-                       class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                {% if form.full_name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.full_name.errors|join:" / " }}</p>{% endif %}
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="id_full_name" class="mb-1.5 block text-sm font-medium text-stone-700">نام و نام خانوادگی</label>
+                    <input type="text" id="id_full_name" name="full_name" required value="{{ form.full_name.value|default:'' }}"
+                           placeholder="مثال: علی رضایی"
+                           class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                    {% if form.full_name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.full_name.errors|join:" / " }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="id_phone" class="mb-1.5 block text-sm font-medium text-stone-700">شماره موبایل</label>
+                    <input type="tel" id="id_phone" name="phone" required inputmode="numeric" maxlength="11"
+                           value="{{ form.phone.value|default:'' }}" placeholder="09123456789" dir="ltr"
+                           class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                    {% if form.phone.errors %}<p class="mt-1 text-xs text-red-600">{{ form.phone.errors|join:" / " }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label for="id_national_id" class="mb-1.5 block text-sm font-medium text-stone-700">کد ملی</label>
+                    <input type="text" id="id_national_id" name="national_id" required inputmode="numeric" maxlength="10"
+                           value="{{ form.national_id.value|default:'' }}" placeholder="۱۰ رقم" dir="ltr"
+                           class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                    {% if form.national_id.errors %}<p class="mt-1 text-xs text-red-600">{{ form.national_id.errors|join:" / " }}</p>{% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="id_password" class="mb-1.5 block text-sm font-medium text-stone-700">رمز عبور</label>
+                        <input type="password" id="id_password" name="password" required minlength="8" dir="ltr" placeholder="حداقل ۸ کاراکتر"
+                               class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                        {% if form.password.errors %}<p class="mt-1 text-xs text-red-600">{{ form.password.errors|join:" / " }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="id_password2" class="mb-1.5 block text-sm font-medium text-stone-700">تکرار رمز عبور</label>
+                        <input type="password" id="id_password2" name="password2" required dir="ltr"
+                               class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                    </div>
+                </div>
             </div>
 
+            <!-- Multi-instrument checkboxes -->
             <div>
-                <label for="id_phone" class="mb-1.5 block text-sm font-medium text-stone-700">شماره موبایل</label>
-                <input type="tel" id="id_phone" name="phone" required inputmode="numeric" maxlength="11"
-                       value="{{ form.phone.value|default:'' }}" placeholder="09123456789" dir="ltr"
-                       class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                {% if form.phone.errors %}<p class="mt-1 text-xs text-red-600">{{ form.phone.errors|join:" / " }}</p>{% endif %}
-            </div>
-
-            <div>
-                <label for="id_national_id" class="mb-1.5 block text-sm font-medium text-stone-700">کد ملی</label>
-                <input type="text" id="id_national_id" name="national_id" required inputmode="numeric" maxlength="10"
-                       value="{{ form.national_id.value|default:'' }}" placeholder="۱۰ رقم" dir="ltr"
-                       class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                {% if form.national_id.errors %}<p class="mt-1 text-xs text-red-600">{{ form.national_id.errors|join:" / " }}</p>{% endif %}
-            </div>
-
-            <div>
-                <label for="id_instrument" class="mb-1.5 block text-sm font-medium text-stone-700">ساز مورد علاقه (اختیاری)</label>
-                <select id="id_instrument" name="instrument"
-                        class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                    {% for value, label in form.instrument.field.choices %}
-                    <option value="{{ value }}">{{ label }}</option>
+                <label class="mb-2 block text-sm font-medium text-stone-700">ساز(های) مورد علاقه (اختیاری)</label>
+                <p class="mb-3 text-xs text-stone-500">می‌توانید چند ساز را انتخاب کنید. سطح هر ساز را بعداً در پروفایل تنظیم می‌کنید.</p>
+                <div class="grid grid-cols-3 gap-2 rounded-lg border border-stone-200 bg-stone-50 p-4 sm:grid-cols-4 md:grid-cols-6">
+                    {% for value, label in form.instruments.field.choices %}
+                    <label class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition hover:bg-white">
+                        <input type="checkbox" name="instruments" value="{{ value }}"
+                               class="h-4 w-4 rounded border-stone-300 text-brand-600 focus:ring-brand-500">
+                        <span>{{ label }}</span>
+                    </label>
                     {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label for="id_password" class="mb-1.5 block text-sm font-medium text-stone-700">رمز عبور</label>
-                <input type="password" id="id_password" name="password" required minlength="8" dir="ltr" placeholder="حداقل ۸ کاراکتر"
-                       class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                {% if form.password.errors %}<p class="mt-1 text-xs text-red-600">{{ form.password.errors|join:" / " }}</p>{% endif %}
-            </div>
-
-            <div>
-                <label for="id_password2" class="mb-1.5 block text-sm font-medium text-stone-700">تکرار رمز عبور</label>
-                <input type="password" id="id_password2" name="password2" required dir="ltr"
-                       class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+                </div>
+                {% if form.instruments.errors %}<p class="mt-1 text-xs text-red-600">{{ form.instruments.errors|join:" / " }}</p>{% endif %}
             </div>
 
             <button type="submit" class="w-full rounded-xl brand-gradient py-3 font-bold text-white shadow-lg transition hover:opacity-90">

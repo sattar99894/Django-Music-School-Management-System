@@ -247,18 +247,20 @@ def student_search(request):
             enrollments__status=Enrollment.Status.ENROLLED,
         )
     students = qs.order_by("full_name")[:15]
-    return JsonResponse({
-        "ok": True,
-        "students": [
-            {
-                "id": s.id,
-                "full_name": s.full_name or "(بدون نام)",
-                "phone": s.phone,
-                "instrument": _INSTRUMENT_LABELS.get(s.instrument, s.instrument) if s.instrument else "—",
-            }
-            for s in students
-        ],
-    })
+    result = []
+    for s in students:
+        primary = s.instrument_profiles.filter(is_primary=True).first() or s.instrument_profiles.first()
+        instruments_str = "، ".join(
+            ip.get_instrument_display() for ip in s.instrument_profiles.all()[:3]
+        ) or "—"
+        result.append({
+            "id": s.id,
+            "full_name": s.full_name or "(بدون نام)",
+            "phone": s.phone,
+            "instrument": _INSTRUMENT_LABELS.get(primary.instrument, primary.instrument) if primary else "—",
+            "instruments": instruments_str,
+        })
+    return JsonResponse({"ok": True, "students": result})
 
 
 # ==================================================================
@@ -277,7 +279,7 @@ def directory(request):
     date_from = request.GET.get("date_from", "")
     date_to = request.GET.get("date_to", "")
 
-    qs = User.objects.filter(role=role)
+    qs = User.objects.filter(role=role).distinct()
     if role == "TEACHER":
         qs = qs.select_related("teacher_profile")
 
@@ -288,9 +290,9 @@ def directory(request):
             | Q(national_id__icontains=q)
         )
     if skill_level:
-        qs = qs.filter(skill_level=skill_level)
+        qs = qs.filter(instrument_profiles__skill_level=skill_level).distinct()
     if instrument:
-        qs = qs.filter(instrument=instrument)
+        qs = qs.filter(instrument_profiles__instrument=instrument).distinct()
     if date_from:
         qs = qs.filter(created_at__date__gte=date_from)
     if date_to:
@@ -361,6 +363,8 @@ def student_detail(request, pk):
     )
     payments = user_obj.payments.select_related("course").order_by("-created_at")
     tickets = user_obj.tickets.order_by("-created_at")
+    instrument_profiles = user_obj.instrument_profiles.all()
+    experiences = user_obj.experiences.all()
 
     teacher_profile = getattr(user_obj, "teacher_profile", None) if user_obj.role == User.Role.TEACHER else None
 
@@ -372,6 +376,8 @@ def student_detail(request, pk):
             "enrollments": enrollments,
             "payments": payments,
             "tickets": tickets,
+            "instrument_profiles": instrument_profiles,
+            "experiences": experiences,
             "teacher_profile": teacher_profile,
         },
     )

@@ -186,10 +186,10 @@
                   '<div class="font-medium text-stone-900">' +
                   escapeHtml(s.full_name) +
                   "</div>" +
-                  '<div class="text-xs text-stone-500" dir="ltr">' +
-                  escapeHtml(s.phone) +
+                  '<div class="text-xs text-stone-500">' +
+                  escapeHtml(s.instruments || s.instrument) +
                   " · " +
-                  escapeHtml(s.instrument) +
+                  '<span dir="ltr">' + escapeHtml(s.phone) + "</span>" +
                   "</div>" +
                   "</button>"
               )
