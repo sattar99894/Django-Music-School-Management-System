@@ -155,17 +155,6 @@ SITE_URL=http://localhost:8000
 ZARINPAL_MERCHANT_ID=your-merchant-id
 ZARINPAL_SANDBOX=True
 
-# دیتابیس (اختیاری)
-DB_NAME=db.sqlite3
-# برای PostgreSQL:
-# DB_ENGINE=django.db.backends.postgresql
-# DB_NAME=mydb
-# DB_USER=myuser
-# DB_PASSWORD=mypass
-# DB_HOST=localhost
-# DB_PORT=5432
-> ⚠️ در محیط تولید حتماً `DEBUG=False` و `ZARINPAL_SANDBOX=False` تنظیم شود.
-
 ---
 
 ## 🗂️ دیتابیس و مدل‌ها
