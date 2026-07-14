@@ -18,7 +18,7 @@ from apps.accounts.decorators import admin_required
 from apps.accounts.models import User
 from apps.payments.models import Payment
 from apps.school.models import Class, Course, Enrollment, Instrument, Teacher
-from apps.tickets.models import Ticket
+from apps.tickets.models import Ticket, TicketMessage
 
 # Instrument label lookup (User.instrument is a plain CharField, not a choices field)
 _INSTRUMENT_LABELS = dict(Instrument.choices)
@@ -379,5 +379,161 @@ def student_detail(request, pk):
             "instrument_profiles": instrument_profiles,
             "experiences": experiences,
             "teacher_profile": teacher_profile,
+        },
+    )
+
+
+# ==================================================================
+# Tickets management (admin)
+# ==================================================================
+@admin_required
+def tickets_list(request):
+    """List all tickets with filters (status, priority, category, search)."""
+    tickets_qs = Ticket.objects.select_related("student").order_by("-created_at")
+
+    q = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")
+    priority = request.GET.get("priority", "")
+    category = request.GET.get("category", "")
+
+    if q:
+        tickets_qs = tickets_qs.filter(
+            Q(title__icontains=q)
+            | Q(description__icontains=q)
+            | Q(student__full_name__icontains=q)
+            | Q(student__phone__icontains=q)
+        )
+    if status:
+        tickets_qs = tickets_qs.filter(status=status)
+    if priority:
+        tickets_qs = tickets_qs.filter(priority=priority)
+    if category:
+        tickets_qs = tickets_qs.filter(category=category)
+
+    return render(
+        request,
+        "admin_panel/tickets.html",
+        {
+            "tickets": tickets_qs,
+            "filters": {"q": q, "status": status, "priority": priority, "category": category},
+        },
+    )
+
+
+@admin_required
+def ticket_detail(request, pk):
+    """View a ticket thread + reply (AJAX)."""
+    ticket = get_object_or_404(Ticket, pk=pk)
+    messages = ticket.messages.select_related("sender").order_by("created_at")
+    return render(
+        request,
+        "admin_panel/ticket_detail.html",
+        {"ticket": ticket, "messages": messages},
+    )
+
+
+@require_POST
+@admin_required
+def ticket_reply(request, pk):
+    """Admin replies to a ticket via AJAX."""
+    ticket = get_object_or_404(Ticket, pk=pk)
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "errors": {"message": "بدنه درخواست نامعتبر است."}}, status=400)
+
+    message = (data.get("message") or "").strip()
+    if len(message) < 2:
+        return JsonResponse({"ok": False, "errors": {"message": "پیام نمی‌تواند خالی باشد."}}, status=400)
+
+    msg = TicketMessage.objects.create(ticket=ticket, sender=request.user, message=message)
+    # Mark as answered
+    ticket.status = Ticket.Status.ANSWERED
+    ticket.save(update_fields=["status"])
+
+    created_persian = jdatetime.datetime.fromgregorian(datetime=msg.created_at).strftime("%H:%M - %d %B %Y")
+    return JsonResponse({
+        "ok": True,
+        "message": {
+            "body": msg.message,
+            "sender_name": msg.sender.full_name if msg.sender else "مدیر",
+            "is_admin": True,
+            "created_at_persian": created_persian,
+        },
+        "ticket_status": ticket.status,
+        "ticket_status_label": ticket.get_status_display(),
+    })
+
+
+@require_POST
+@admin_required
+def ticket_close(request, pk):
+    """Close a ticket via AJAX."""
+    ticket = get_object_or_404(Ticket, pk=pk)
+    ticket.status = Ticket.Status.CLOSED
+    ticket.save(update_fields=["status"])
+    return JsonResponse({
+        "ok": True,
+        "ticket_status": ticket.status,
+        "ticket_status_label": ticket.get_status_display(),
+    })
+
+
+# ==================================================================
+# Payments management (admin)
+# ==================================================================
+@admin_required
+def payments_list(request):
+    """List all payments with filters (status, search)."""
+    payments_qs = Payment.objects.select_related("student", "course").order_by("-created_at")
+
+    q = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")
+
+    if q:
+        payments_qs = payments_qs.filter(
+            Q(student__full_name__icontains=q)
+            | Q(student__phone__icontains=q)
+            | Q(student_name__icontains=q)
+            | Q(student_phone__icontains=q)
+            | Q(ref_id__icontains=q)
+            | Q(authority__icontains=q)
+        )
+    if status:
+        payments_qs = payments_qs.filter(status=status)
+
+    # Summary stats
+    total_success = Payment.objects.filter(status=Payment.Status.SUCCESS).aggregate(
+        t=Sum("amount")
+    )["t"] or 0
+    total_pending = Payment.objects.filter(status=Payment.Status.PENDING).count()
+    total_failed = Payment.objects.filter(status=Payment.Status.FAILED).count()
+
+    return render(
+        request,
+        "admin_panel/payments.html",
+        {
+            "payments": payments_qs,
+            "filters": {"q": q, "status": status},
+            "total_success": total_success,
+            "total_pending": total_pending,
+            "total_failed": total_failed,
+        },
+    )
+
+
+@admin_required
+def payment_detail(request, pk):
+    """View a single payment's full details."""
+    payment = get_object_or_404(Payment.objects.select_related("student", "course"), pk=pk)
+    created_persian = jdatetime.datetime.fromgregorian(datetime=payment.created_at).strftime("%d %B %Y - %H:%M")
+    updated_persian = jdatetime.datetime.fromgregorian(datetime=payment.updated_at).strftime("%d %B %Y - %H:%M")
+    return render(
+        request,
+        "admin_panel/payment_detail.html",
+        {
+            "payment": payment,
+            "created_persian": created_persian,
+            "updated_persian": updated_persian,
         },
     )

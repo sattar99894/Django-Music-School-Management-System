@@ -27,7 +27,6 @@ PERSIAN_DAYS: List[str] = [
 _NORM = [d.replace("\u200c", "").replace("\u200d", "") for d in PERSIAN_DAYS]
 _NORM_MAP = dict(zip(_NORM, PERSIAN_DAYS))
 
-
 def persian_weekday_index(d: date | None = None) -> int:
     """Return 0-6 where 0 = شنبه (Saturday)."""
     if d is None:

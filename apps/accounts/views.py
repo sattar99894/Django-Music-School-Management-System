@@ -54,7 +54,7 @@ def login_view(request):
 
 
 def register_view(request):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and request.user.role != User.Role.ADMIN:
         return redirect("auth:dashboard")
 
     if request.method == "POST":

@@ -26,4 +26,14 @@ urlpatterns = [
 
     # Student / Teacher detail
     path("users/<int:pk>/", views.student_detail, name="student_detail"),
+
+    # Tickets management
+    path("tickets/", views.tickets_list, name="tickets"),
+    path("tickets/<int:pk>/", views.ticket_detail, name="ticket_detail"),
+    path("tickets/<int:pk>/reply/", views.ticket_reply, name="ticket_reply"),
+    path("tickets/<int:pk>/close/", views.ticket_close, name="ticket_close"),
+
+    # Payments management
+    path("payments/", views.payments_list, name="payments"),
+    path("payments/<int:pk>/", views.payment_detail, name="payment_detail"),
 ]

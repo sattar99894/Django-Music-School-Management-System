@@ -1,0 +1,101 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load persian_tags %}
+
+{% block title %}تیکت‌ها | پنل مدیریت{% endblock %}
+
+{% block panel_content %}
+<div>
+    <h1 class="text-2xl font-extrabold text-stone-900">مدیریت تیکت‌ها</h1>
+    <p class="mt-1 text-sm text-stone-500">{{ tickets|length }} تیکت — پاسخ به درخواست‌های دانشجویان</p>
+</div>
+
+<!-- Filters -->
+<form method="get" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="lg:col-span-2">
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="جستجو: عنوان، متن، نام یا موبایل دانشجو..."
+               class="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+    </div>
+    <select name="status" class="rounded-lg border border-stone-300 px-3 py-2.5 text-sm outline-none focus:border-brand-500">
+        <option value="">همه وضعیت‌ها</option>
+        <option value="OPEN" {% if filters.status == 'OPEN' %}selected{% endif %}>باز</option>
+        <option value="ANSWERED" {% if filters.status == 'ANSWERED' %}selected{% endif %}>پاسخ داده‌شده</option>
+        <option value="CLOSED" {% if filters.status == 'CLOSED' %}selected{% endif %}>بسته‌شده</option>
+    </select>
+    <select name="priority" class="rounded-lg border border-stone-300 px-3 py-2.5 text-sm outline-none focus:border-brand-500">
+        <option value="">همه اولویت‌ها</option>
+        <option value="LOW" {% if filters.priority == 'LOW' %}selected{% endif %}>کم</option>
+        <option value="NORMAL" {% if filters.priority == 'NORMAL' %}selected{% endif %}>معمولی</option>
+        <option value="HIGH" {% if filters.priority == 'HIGH' %}selected{% endif %}>زیاد</option>
+        <option value="URGENT" {% if filters.priority == 'URGENT' %}selected{% endif %}>فوری</option>
+    </select>
+    <select name="category" class="rounded-lg border border-stone-300 px-3 py-2.5 text-sm outline-none focus:border-brand-500">
+        <option value="">همه دسته‌ها</option>
+        <option value="FINANCE" {% if filters.category == 'FINANCE' %}selected{% endif %}>مالی و پرداخت</option>
+        <option value="CLASS" {% if filters.category == 'CLASS' %}selected{% endif %}>کلاس و دوره</option>
+        <option value="SCHEDULE" {% if filters.category == 'SCHEDULE' %}selected{% endif %}>برنامه کلاسی</option>
+        <option value="OTHER" {% if filters.category == 'OTHER' %}selected{% endif %}>سایر</option>
+    </select>
+    <div class="flex gap-2 lg:col-span-5">
+        <button type="submit" class="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90">اعمال فیلتر</button>
+        <a href="{% url 'admin_panel:tickets' %}" class="rounded-lg border border-stone-300 px-4 py-2 text-sm hover:bg-stone-100">پاک کردن</a>
+    </div>
+</form>
+
+<!-- Tickets table -->
+<div class="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-stone-50 text-right text-xs text-stone-500">
+                <tr>
+                    <th class="px-4 py-3 font-medium">عنوان</th>
+                    <th class="px-4 py-3 font-medium">دانشجو</th>
+                    <th class="px-4 py-3 font-medium">دسته</th>
+                    <th class="px-4 py-3 font-medium text-center">اولویت</th>
+                    <th class="px-4 py-3 font-medium text-center">وضعیت</th>
+                    <th class="px-4 py-3 font-medium">تاریخ</th>
+                    <th class="px-4 py-3 font-medium text-center">عملیات</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-stone-100">
+                {% for t in tickets %}
+                <tr class="transition hover:bg-stone-50">
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-stone-900">{{ t.title }}</div>
+                        <div class="line-clamp-1 text-xs text-stone-500">{{ t.description }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-stone-700">{{ t.student.full_name|default:t.student.phone }}</div>
+                        <div class="text-xs text-stone-400" dir="ltr">{{ t.student.phone }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-stone-600">{{ t.get_category_display }}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="rounded-full px-2 py-0.5 text-xs
+                            {% if t.priority == 'URGENT' or t.priority == 'HIGH' %}bg-red-50 text-red-600
+                            {% elif t.priority == 'NORMAL' %}bg-stone-100 text-stone-600
+                            {% else %}bg-stone-50 text-stone-400{% endif %}">
+                            {{ t.get_priority_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="rounded-full px-2 py-0.5 text-xs
+                            {% if t.status == 'OPEN' %}bg-amber-100 text-amber-700
+                            {% elif t.status == 'ANSWERED' %}bg-green-100 text-green-700
+                            {% else %}bg-stone-100 text-stone-500{% endif %}">
+                            {{ t.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-stone-500">{{ t.created_at|jdate:"%d %B %Y" }}</td>
+                    <td class="px-4 py-3 text-center">
+                        <a href="{% url 'admin_panel:ticket_detail' t.pk %}" class="inline-block rounded-lg brand-gradient px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
+                            پاسخ
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="px-4 py-12 text-center text-stone-500">تیکتی یافت نشد.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

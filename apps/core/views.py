@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 from apps.accounts.models import User
 from apps.payments.models import Payment
 from apps.school.models import Course
+from django.contrib.auth.decorators import login_required
 
 
 # ------------------------------------------------------------------
@@ -49,6 +50,7 @@ def course_detail(request, pk):
 # ------------------------------------------------------------------
 # Invoice / checkout
 # ------------------------------------------------------------------
+@login_required(login_url="auth:login")
 @require_http_methods(["GET", "POST"])
 def invoice(request, course_id):
     course = get_object_or_404(Course, pk=course_id)

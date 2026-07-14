@@ -1,0 +1,116 @@
+{% extends "admin_panel/admin_base.html" %}
+{% load persian_tags static %}
+
+{% block title %}{{ ticket.title }} | تیکت‌ها{% endblock %}
+
+{% block panel_content %}
+<a href="{% url 'admin_panel:tickets' %}" class="mb-4 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-800">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    بازگشت به تیکت‌ها
+</a>
+
+<!-- Ticket header -->
+<div class="rounded-2xl border border-stone-200 bg-white p-5">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+            <h1 class="text-xl font-extrabold text-stone-900">{{ ticket.title }}</h1>
+            <p class="mt-1 text-xs text-stone-500">ثبت: {{ ticket.created_at|jdate:"%d %B %Y - %H:%M" }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="ticket-status-badge" class="rounded-full px-3 py-1 text-xs font-medium
+                {% if ticket.status == 'OPEN' %}bg-amber-100 text-amber-700
+                {% elif ticket.status == 'ANSWERED' %}bg-green-100 text-green-700
+                {% else %}bg-stone-100 text-stone-500{% endif %}">
+                {{ ticket.get_status_display }}
+            </span>
+            {% if ticket.status != 'CLOSED' %}
+            <button type="button" id="close-ticket-btn"
+                    data-url="{% url 'admin_panel:ticket_close' ticket.pk %}"
+                    class="rounded-lg border border-stone-300 px-3 py-1 text-xs font-medium hover:bg-stone-100">
+                بستن تیکت
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Student info -->
+    <div class="mt-4 flex items-center gap-3 rounded-xl bg-stone-50 p-3">
+        <a href="{% url 'admin_panel:student_detail' ticket.student.id %}" class="flex items-center gap-3 hover:opacity-80">
+            {% if ticket.student.avatar %}
+            <img src="{{ ticket.student.avatar.url }}" alt="" class="h-10 w-10 rounded-full object-cover">
+            {% else %}
+            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-stone-300 text-sm font-bold text-stone-600">
+                {{ ticket.student.full_name|slice:":1"|default:"؟" }}
+            </span>
+            {% endif %}
+            <div>
+                <div class="text-xs text-stone-500">دانشجو</div>
+                <div class="font-semibold text-stone-900">{{ ticket.student.full_name|default:"بدون نام" }}</div>
+                <div class="text-xs text-stone-500" dir="ltr">{{ ticket.student.phone }}</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+        <span class="rounded-md bg-stone-100 px-2 py-0.5 text-xs text-stone-600">{{ ticket.get_category_display }}</span>
+        <span class="rounded-md px-2 py-0.5 text-xs
+            {% if ticket.priority == 'URGENT' or ticket.priority == 'HIGH' %}bg-red-50 text-red-600{% else %}bg-stone-100 text-stone-600{% endif %}">
+            اولویت: {{ ticket.get_priority_display }}
+        </span>
+    </div>
+
+    <p class="mt-4 whitespace-pre-line text-sm leading-7 text-stone-700">{{ ticket.description }}</p>
+</div>
+
+<!-- Messages thread -->
+<section class="mt-6">
+    <h2 class="mb-3 text-sm font-semibold text-stone-600">گفتگو</h2>
+    <div id="msg-list" class="max-h-[500px] space-y-3 overflow-y-auto scroll-thin pr-1">
+        {% for m in messages %}
+        <div class="flex {% if m.sender.role == 'ADMIN' %}justify-end{% else %}justify-start{% endif %}">
+            <div class="max-w-[75%] rounded-2xl px-4 py-3 text-sm
+                {% if m.sender.role == 'ADMIN' %}bg-stone-800 text-white{% else %}bg-stone-100 text-stone-800{% endif %}">
+                {% if m.sender.role == 'ADMIN' %}
+                <div class="mb-1 text-xs font-semibold opacity-80">{{ m.sender.full_name }} · مدیریت</div>
+                {% else %}
+                <div class="mb-1 text-xs font-semibold opacity-80">{{ m.sender.full_name|default:"دانشجو" }} · دانشجو</div>
+                {% endif %}
+                <div class="whitespace-pre-line leading-6">{{ m.message }}</div>
+                <div class="mt-1 text-[10px] {% if m.sender.role == 'ADMIN' %}text-white/60{% else %}text-stone-400{% endif %}">{{ m.created_at|jdate:"%H:%M - %d %B %Y" }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-sm text-stone-500">هنوز پیامی ثبت نشده است.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Reply form (AJAX) -->
+    <form id="reply-form" class="mt-4">
+        {% csrf_token %}
+        <textarea id="reply-input" name="message" required minlength="2" rows="3"
+                  placeholder="پاسخ خود را بنویسید..."
+                  class="w-full rounded-xl border border-stone-300 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"></textarea>
+        <p data-error="message" class="mt-1 hidden text-xs text-red-600"></p>
+        <div class="mt-2 flex items-center gap-2">
+            <button type="submit" id="reply-submit"
+                    class="flex items-center gap-1.5 rounded-xl brand-gradient px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                ارسال پاسخ
+            </button>
+            <span class="text-xs text-stone-400">پاسخ شما به‌صورت خودکار وضعیت تیکت را به «پاسخ داده‌شده» تغییر می‌دهد.</span>
+        </div>
+    </form>
+</section>
+
+<div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-50 hidden -translate-x-1/2">
+    <div class="rounded-lg bg-stone-900 px-5 py-3 text-sm font-medium text-white shadow-xl"></div>
+</div>
+
+<script>
+    window.API = {
+        reply: "{% url 'admin_panel:ticket_reply' ticket.pk %}",
+        close: "{% url 'admin_panel:ticket_close' ticket.pk %}",
+    };
+</script>
+<script src="{% static 'js/admin_ticket.js' %}"></script>
+{% endblock %}
